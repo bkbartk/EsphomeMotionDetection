@@ -3,8 +3,8 @@ version: "1.0"
 
 binary_sensor:
   - platform: motion_detector
-    name: "Motion Detector"
 
 files:
   - motion_detector.h
   - motion_detector.cpp
+  - __init__.py
