@@ -1,0 +1,5 @@
+name: "motion_detector"
+version: "1.0"
+files:
+  - motion_detector.h
+  - motion_detector.cpp
