@@ -16,6 +16,7 @@ async def to_code(config):
     var = await binary_sensor.new_binary_sensor(config)
     await cg.register_component(var, config)
 
-    cg.add(var.threshold.set(config["threshold"]))
-    cg.add(var.motion_pixels.set(config["motion_pixels"]))
-    cg.add(var.frame_skip.set(config["frame_skip"]))
+    cg.add(var.set_threshold(config["threshold"]))
+    cg.add(var.set_motion_pixels(config["motion_pixels"]))
+    cg.add(var.set_frame_skip(config["frame_skip"]))
+
