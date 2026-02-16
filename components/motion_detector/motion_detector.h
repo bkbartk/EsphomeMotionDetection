@@ -5,9 +5,7 @@
 namespace esphome {
 namespace motion_detector {
 
-class MotionDetector : public Component,
-                       public camera::CameraImageReader,
-                       public binary_sensor::BinarySensor {
+class MotionDetector : public Component, public binary_sensor::BinarySensor {
  public:
   int threshold = 25;
   int motion_pixels = 2000;
@@ -18,12 +16,17 @@ class MotionDetector : public Component,
 
   void setup() override {
     ESP_LOGI("motion", "Motion detector initialized");
-    camera::global_camera->add_image_reader(this);
   }
 
-  void on_frame(camera_fb_t *fb) override {
+  void loop() override {
     counter++;
     if (counter % frame_skip != 0) return;
+
+    camera_fb_t *fb = esp_camera_fb_get();
+    if (!fb) {
+      ESP_LOGW("motion", "Failed to get frame");
+      return;
+    }
 
     if (last_frame) {
       int changes = 0;
@@ -33,6 +36,7 @@ class MotionDetector : public Component,
       }
 
       publish_state(changes > motion_pixels);
+
       esp_camera_fb_return(last_frame);
     }
 
