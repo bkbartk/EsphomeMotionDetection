@@ -2,9 +2,12 @@
 #include "esphome.h"
 #include "esp_camera.h"
 
-class MotionDetector : public esphome::Component,
-                       public esphome::camera::CameraImageReader,
-                       public esphome::binary_sensor::BinarySensor {
+namespace esphome {
+namespace motion_detector {
+
+class MotionDetector : public Component,
+                       public camera::CameraImageReader,
+                       public binary_sensor::BinarySensor {
  public:
   int threshold = 25;
   int motion_pixels = 2000;
@@ -15,8 +18,7 @@ class MotionDetector : public esphome::Component,
 
   void setup() override {
     ESP_LOGI("motion", "Motion detector initialized");
-    // Register with camera
-    esphome::camera::global_camera->add_image_reader(this);
+    camera::global_camera->add_image_reader(this);
   }
 
   void on_frame(camera_fb_t *fb) override {
@@ -37,3 +39,6 @@ class MotionDetector : public esphome::Component,
     last_frame = fb;
   }
 };
+
+}  // namespace motion_detector
+}  // namespace esphome
