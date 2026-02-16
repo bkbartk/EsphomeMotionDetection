@@ -11,6 +11,10 @@ class MotionDetector : public Component, public binary_sensor::BinarySensor {
   int motion_pixels = 2000;
   int frame_skip = 5;
 
+  void set_threshold(int v) { threshold = v; }
+  void set_motion_pixels(int v) { motion_pixels = v; }
+  void set_frame_skip(int v) { frame_skip = v; }
+
   camera_fb_t *last_frame = nullptr;
   int counter = 0;
 
