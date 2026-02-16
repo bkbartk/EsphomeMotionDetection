@@ -6,15 +6,17 @@ class MotionDetector : public esphome::Component,
                        public esphome::camera::CameraImageReader,
                        public esphome::binary_sensor::BinarySensor {
  public:
-  int threshold = 25;        // pixel difference threshold
-  int motion_pixels = 2000;  // number of changed pixels required
-  int frame_skip = 5;        // analyze every N frames
+  int threshold = 25;
+  int motion_pixels = 2000;
+  int frame_skip = 5;
 
   camera_fb_t *last_frame = nullptr;
   int counter = 0;
 
   void setup() override {
     ESP_LOGI("motion", "Motion detector initialized");
+    // Register with camera
+    esphome::camera::global_camera->add_image_reader(this);
   }
 
   void on_frame(camera_fb_t *fb) override {
