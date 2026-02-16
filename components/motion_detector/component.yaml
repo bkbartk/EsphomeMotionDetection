@@ -1,5 +1,7 @@
 name: "motion_detector"
 version: "1.0"
+binary_sensor:
+  - platform: motion_detector
 files:
   - motion_detector.h
   - motion_detector.cpp
