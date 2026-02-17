@@ -1,19 +1,16 @@
 #pragma once
 #include "esphome.h"
 #include "esp_camera.h"
+#include "img_converters.h"
 
 namespace esphome {
 namespace motion_detector {
 
 class MotionDetector : public Component, public binary_sensor::BinarySensor {
  public:
-  // Camera must be set to 160x120 in YAML
-  static const int SRC_W = 160;
-  static const int SRC_H = 120;
-
-  // Downscaled resolution
-  static const int OUT_W = 64;
-  static const int OUT_H = 48;
+  // Downscaled resolution (fixed, small, fast)
+  static const int OUT_W = 48;
+  static const int OUT_H = 36;
 
   // Buffers
   uint8_t gray_[OUT_W * OUT_H];
@@ -21,52 +18,54 @@ class MotionDetector : public Component, public binary_sensor::BinarySensor {
 
   bool has_bg_ = false;
 
-  int frame_skip_ = 5;
-  int counter_ = 0;
-
   void setup() override {
     ESP_LOGI("motion", "MotionDetector setup()");
-
-    // Force YUV422 (no JPEG decode needed)
-    sensor_t *s = esp_camera_sensor_get();
-    if (s != nullptr) {
-      s->set_pixformat(s, PIXFORMAT_YUV422);
-      ESP_LOGI("motion", "Pixel format set to YUV422");
-    }
   }
 
   void loop() override {
-    counter_++;
-    if (counter_ % frame_skip_ != 0) {
-      return;
-    }
+    // Run at 1 FPS
+    static uint32_t last = 0;
+    uint32_t now = millis();
+    if (now - last < 1000) return;
+    last = now;
 
+    // Grab frame
     camera_fb_t *fb = esp_camera_fb_get();
     if (!fb) {
       ESP_LOGW("motion", "Failed to get frame");
       return;
     }
 
-    // fb->buf is YUV422: Y0 U Y1 V
-    uint8_t *yuv = fb->buf;
+    int src_w = fb->width;
+    int src_h = fb->height;
 
-    // Convert YUV422 → grayscale (use Y only)
-    int gi = 0;
-    for (int i = 0; i < SRC_W * SRC_H * 2; i += 4) {
-      uint8_t y0 = yuv[i];
+    // Temporary RGB buffer (dynamic, small)
+    int rgb_size = src_w * src_h * 3;
+    std::vector<uint8_t> rgb(rgb_size);
 
-      int px = gi % OUT_W;
-      int py = gi / OUT_W;
+    // Decode JPEG → RGB888
+    bool ok = fmt2rgb888(fb->buf, fb->len, PIXFORMAT_JPEG, rgb.data());
+    esp_camera_fb_return(fb);
 
-      if (px < OUT_W && py < OUT_H) {
-        gray_[py * OUT_W + px] = y0;
-      }
-
-      gi++;
-      if (gi >= OUT_W * OUT_H) break;
+    if (!ok) {
+      ESP_LOGW("motion", "JPEG decode failed");
+      return;
     }
 
-    esp_camera_fb_return(fb);
+    // Downscale + grayscale
+    for (int y = 0; y < OUT_H; y++) {
+      for (int x = 0; x < OUT_W; x++) {
+        int sx = x * src_w / OUT_W;
+        int sy = y * src_h / OUT_H;
+        int idx = (sy * src_w + sx) * 3;
+
+        uint8_t r = rgb[idx];
+        uint8_t g = rgb[idx + 1];
+        uint8_t b = rgb[idx + 2];
+
+        gray_[y * OUT_W + x] = (r * 30 + g * 59 + b * 11) / 100;
+      }
+    }
 
     // Initialize background
     if (!has_bg_) {
@@ -86,16 +85,16 @@ class MotionDetector : public Component, public binary_sensor::BinarySensor {
       float bg = bg_[i];
       float cur = gray_[i];
 
-      bg = bg + 0.05f * (cur - bg);
+      bg = bg + 0.01f * (cur - bg);  // slow update
       bg_[i] = bg;
 
       float diff = fabsf(cur - bg);
-      if (diff > 20) {
+      if (diff > 35) {  // pixel threshold
         active++;
       }
     }
 
-    bool motion = (active > total * 0.02f);
+    bool motion = (active > total * 0.10f);  // 10% pixels changed
     publish_state(motion);
   }
 };
