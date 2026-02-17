@@ -11,14 +11,27 @@ class MotionDetector : public Component, public binary_sensor::BinarySensor {
   }
 
   void loop() override {
-    // Just to prove it's alive
-    static uint32_t last = 0;
-    uint32_t now = millis();
-    if (now - last > 5000) {
-      last = now;
-      ESP_LOGI("motion", "MotionDetector loop() still running");
-    }
-  }
+   // 1. Ensure camera is initialized
+   sensor_t *s = esp_camera_sensor_get();
+   if (s == nullptr) {
+     // Camera not ready yet
+     return;
+   }
+ 
+   // 2. Try to get a frame
+   camera_fb_t *fb = esp_camera_fb_get();
+   if (!fb) {
+     ESP_LOGW("motion", "Failed to get frame");
+     return;
+   }
+ 
+   // 3. Log once to confirm this part works
+   ESP_LOGI("motion", "Got frame %dx%d", fb->width, fb->height);
+ 
+   // 4. Return the frame immediately (no processing yet)
+   esp_camera_fb_return(fb);
+ }
+
 };
 
 }  // namespace motion_detector
