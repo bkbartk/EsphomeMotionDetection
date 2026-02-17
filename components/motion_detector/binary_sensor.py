@@ -12,6 +12,8 @@ CONF_FRAME_SKIP = "frame_skip"
 CONF_BLOCK_WIDTH = "block_width"
 CONF_BLOCK_HEIGHT = "block_height"
 CONF_BACKGROUND_ALPHA = "background_alpha"
+CONF_OUTPUT_WIDTH = "output_width"
+CONF_OUTPUT_HEIGHT = "output_height"
 
 CONFIG_SCHEMA = binary_sensor.binary_sensor_schema(MotionDetector).extend({
     cv.Optional(CONF_PIXEL_DIFF_THRESHOLD, default=25): cv.int_,
@@ -20,6 +22,8 @@ CONFIG_SCHEMA = binary_sensor.binary_sensor_schema(MotionDetector).extend({
     cv.Optional(CONF_BLOCK_WIDTH, default=8): cv.int_,
     cv.Optional(CONF_BLOCK_HEIGHT, default=8): cv.int_,
     cv.Optional(CONF_BACKGROUND_ALPHA, default=0.05): cv.float_range(min=0.0, max=1.0),
+    cv.Optional(CONF_OUTPUT_WIDTH, default=128): cv.int_,
+    cv.Optional(CONF_OUTPUT_HEIGHT, default=96): cv.int_,
 })
 
 async def to_code(config):
@@ -31,3 +35,4 @@ async def to_code(config):
     cg.add(var.set_frame_skip(config[CONF_FRAME_SKIP]))
     cg.add(var.set_block_size(config[CONF_BLOCK_WIDTH], config[CONF_BLOCK_HEIGHT]))
     cg.add(var.set_background_alpha(config[CONF_BACKGROUND_ALPHA]))
+    cg.add(var.set_output_size(config[CONF_OUTPUT_WIDTH], config[CONF_OUTPUT_HEIGHT]))
