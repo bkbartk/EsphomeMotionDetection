@@ -6,17 +6,28 @@ from esphome.const import CONF_ID
 motion_detector_ns = cg.esphome_ns.namespace("motion_detector")
 MotionDetector = motion_detector_ns.class_("MotionDetector", binary_sensor.BinarySensor, cg.Component)
 
+CONF_PIXEL_DIFF_THRESHOLD = "pixel_diff_threshold"
+CONF_MOTION_BLOCKS_THRESHOLD = "motion_blocks_threshold"
+CONF_FRAME_SKIP = "frame_skip"
+CONF_BLOCK_WIDTH = "block_width"
+CONF_BLOCK_HEIGHT = "block_height"
+CONF_BACKGROUND_ALPHA = "background_alpha"
+
 CONFIG_SCHEMA = binary_sensor.binary_sensor_schema(MotionDetector).extend({
-    cv.Optional("threshold", default=25): cv.int_,
-    cv.Optional("motion_pixels", default=2000): cv.int_,
-    cv.Optional("frame_skip", default=5): cv.int_,
+    cv.Optional(CONF_PIXEL_DIFF_THRESHOLD, default=25): cv.int_,
+    cv.Optional(CONF_MOTION_BLOCKS_THRESHOLD, default=5): cv.int_,
+    cv.Optional(CONF_FRAME_SKIP, default=5): cv.int_,
+    cv.Optional(CONF_BLOCK_WIDTH, default=8): cv.int_,
+    cv.Optional(CONF_BLOCK_HEIGHT, default=8): cv.int_,
+    cv.Optional(CONF_BACKGROUND_ALPHA, default=0.05): cv.float_range(min=0.0, max=1.0),
 })
 
 async def to_code(config):
     var = await binary_sensor.new_binary_sensor(config)
     await cg.register_component(var, config)
 
-    cg.add(var.set_threshold(config["threshold"]))
-    cg.add(var.set_motion_pixels(config["motion_pixels"]))
-    cg.add(var.set_frame_skip(config["frame_skip"]))
-
+    cg.add(var.set_pixel_diff_threshold(config[CONF_PIXEL_DIFF_THRESHOLD]))
+    cg.add(var.set_motion_blocks_threshold(config[CONF_MOTION_BLOCKS_THRESHOLD]))
+    cg.add(var.set_frame_skip(config[CONF_FRAME_SKIP]))
+    cg.add(var.set_block_size(config[CONF_BLOCK_WIDTH], config[CONF_BLOCK_HEIGHT]))
+    cg.add(var.set_background_alpha(config[CONF_BACKGROUND_ALPHA]))
