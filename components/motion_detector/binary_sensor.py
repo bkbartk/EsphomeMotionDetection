@@ -4,7 +4,7 @@ from esphome.components import binary_sensor
 from esphome.const import CONF_ID
 
 motion_detector_ns = cg.esphome_ns.namespace("motion_detector")
-MotionDetector = motion_detector_ns.class_("MotionDetector", binary_sensor.BinarySensor, cg.Component)
+MotionDetector = motion_detector_ns.class_("MotionDetector", cg.Component, binary_sensor.BinarySensor)
 
 CONF_PIXEL_DIFF_THRESHOLD = "pixel_diff_threshold"
 CONF_MOTION_BLOCKS_THRESHOLD = "motion_blocks_threshold"
